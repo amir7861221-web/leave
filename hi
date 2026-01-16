@@ -1,0 +1,132 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local Lighting = game:GetService("Lighting")
+local Camera = workspace.CurrentCamera
+local lp = Players.LocalPlayer
+
+-- STABILITÄTS-CHECK (Altes UI löschen)
+if CoreGui:FindFirstChild("DeltaFinalMaster") then 
+    CoreGui.DeltaFinalMaster:Destroy() 
+end
+
+-- 1. HAUPT-CONTAINER
+local masterGui = Instance.new("ScreenGui")
+masterGui.Name = "DeltaFinalMaster"
+masterGui.Parent = CoreGui
+masterGui.IgnoreGuiInset = true
+masterGui.ResetOnSpawn = false
+
+-- 2. LEAVE BUTTON (Oben Rechts)
+local leaveButton = Instance.new("TextButton")
+leaveButton.Size = UDim2.new(0, 100, 0, 40)
+leaveButton.Position = UDim2.new(1, -120, 0, 20)
+leaveButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+leaveButton.Text = "LEAVE"
+leaveButton.TextColor3 = Color3.new(1, 1, 1)
+leaveButton.Font = Enum.Font.GothamBold
+leaveButton.TextSize = 14
+leaveButton.Parent = masterGui
+Instance.new("UICorner", leaveButton).CornerRadius = UDim.new(0, 8)
+
+leaveButton.MouseButton1Click:Connect(function()
+    game:Shutdown()
+end)
+
+-- 3. FPS COUNTER (Oben Mitte)
+local fpsLabel = Instance.new("TextLabel")
+fpsLabel.Size = UDim2.new(0, 90, 0, 30)
+fpsLabel.Position = UDim2.new(0.5, -45, 0, 10)
+fpsLabel.BackgroundTransparency = 0.6
+fpsLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+fpsLabel.TextColor3 = Color3.new(0, 1, 0)
+fpsLabel.Font = Enum.Font.Code
+fpsLabel.TextSize = 15
+fpsLabel.Parent = masterGui
+Instance.new("UICorner", fpsLabel)
+
+local frameCount = 0
+task.spawn(function()
+    while task.wait(1) do
+        fpsLabel.Text = "FPS: " .. frameCount
+        frameCount = 0
+    end
+end)
+RunService.RenderStepped:Connect(function() frameCount = frameCount + 1 end)
+
+-- 4. AUTO HEADLESS & KORBLOX (Standard-Größe)
+task.spawn(function()
+    while task.wait(0.5) do
+        local char = lp.Character
+        if char and char:FindFirstChild("Humanoid") then
+            -- Headless
+            local head = char:FindFirstChild("Head")
+            if head then
+                head.Transparency = 1
+                if head:FindFirstChild("face") then head.face.Transparency = 1 end
+            end
+            
+            -- Korblox (Rechtes Bein weg)
+            local parts = {"RightUpperLeg", "RightLowerLeg", "RightFoot", "Right Leg"}
+            for _, p in pairs(parts) do
+                local part = char:FindFirstChild(p)
+                if part then part:Destroy() end
+            end
+        end
+    end
+end)
+
+-- 5. ULTRA FPS BOOSTER (Materialien glätten)
+local function ultraBoost()
+    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+    Lighting.GlobalShadows = false
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("Part") or v:IsA("MeshPart") then
+            v.Material = Enum.Material.SmoothPlastic
+        elseif v:IsA("Decal") or v:IsA("Texture") or v:IsA("ParticleEmitter") then
+            v:Destroy()
+        end
+    end
+end
+ultraBoost()
+
+-- 6. ESP MIT TRACERN
+local function createESP(p)
+    if p == lp then return end
+    local tracer = Drawing.new("Line")
+    local info = Drawing.new("Text")
+    
+    RunService.RenderStepped:Connect(function()
+        if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = p.Character.HumanoidRootPart
+            local screenPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+            if onScreen then
+                -- Tracer Linie
+                tracer.Visible = true
+                tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                tracer.To = Vector2.new(screenPos.X, screenPos.Y)
+                tracer.Color = Color3.new(1, 1, 1)
+                tracer.Thickness = 1
+                
+                -- Name
+                info.Visible = true
+                info.Text = p.Name
+                info.Position = Vector2.new(screenPos.X, screenPos.Y - 40)
+                info.Color = Color3.new(1, 1, 1)
+                info.Center = true
+                info.Outline = true
+            else
+                tracer.Visible = false
+                info.Visible = false
+            end
+        else
+            tracer.Visible = false
+            info.Visible = false
+        end
+    end)
+end
+
+Players.PlayerAdded:Connect(createESP)
+for _, p in pairs(Players:GetPlayers()) do createESP(p) end
+
+print("Delta Final Master geladen, Papa!")
