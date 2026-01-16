@@ -56,13 +56,22 @@ task.spawn(function()
     end
 end)
 
--- ULTRA FPS BOOSTER
+-- ULTRA FPS BOOSTER (Wieder extrem wie vorher)
 local function ultraBoost()
     settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
     Lighting.GlobalShadows = false
+    Lighting.FogEnd = 9e9
+    Lighting.Brightness = 2
+    
     for _, v in pairs(game:GetDescendants()) do
-        if v:IsA("Part") or v:IsA("MeshPart") then v.Material = Enum.Material.SmoothPlastic
-        elseif v:IsA("Decal") or v:IsA("Texture") or v:IsA("ParticleEmitter") then v:Destroy() end
+        if v:IsA("Part") or v:IsA("MeshPart") or v:IsA("UnionOperation") then
+            v.Material = Enum.Material.SmoothPlastic
+            v.Reflectance = 0
+        elseif v:IsA("Decal") or v:IsA("Texture") or v:IsA("ParticleEmitter") or v:IsA("Trail") then
+            v:Destroy()
+        elseif v:IsA("Explosion") or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") then
+            v:Destroy()
+        end
     end
 end
 ultraBoost()
@@ -75,14 +84,14 @@ local function createESP(p)
     
     local connection
     connection = RunService.RenderStepped:Connect(function()
-        -- Bedingung: Nur wenn 8 oder weniger Spieler im Server sind
+        -- Nur aktiv wenn 8 oder weniger Spieler im Server
         if #Players:GetPlayers() <= 8 then
             if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
                 local hrp = p.Character.HumanoidRootPart
                 local screenPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
                 
                 if onScreen then
-                    -- Hand Item finden
+                    -- Hand Item Check
                     local tool = p.Character:FindFirstChildOfClass("Tool")
                     local toolName = tool and tool.Name or "Empty"
                     
@@ -108,7 +117,6 @@ local function createESP(p)
                 info.Visible = false
             end
         else
-            -- Mehr als 8 Leute -> Alles verstecken
             tracer.Visible = false
             info.Visible = false
         end
@@ -126,4 +134,4 @@ end
 for _, p in pairs(Players:GetPlayers()) do createESP(p) end
 Players.PlayerAdded:Connect(createESP)
 
-print("Delta Final Master (Hand-Info + 8 Player Limit) geladen!")
+print("Delta Final Master (Classic Booster + Hand-Info) geladen!")
